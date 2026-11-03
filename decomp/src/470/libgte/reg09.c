@@ -1,3 +1,7 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libgte/reg09", ReadGeomScreen);
+s32 ReadGeomScreen(void) {
+    register s32 value asm("v0");
+    __asm__ volatile("cfc2 %0, $26" : "=r"(value));
+    return value;
+}

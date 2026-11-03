@@ -1,3 +1,5 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libgte/reg02_4", ReadSZ2);
+void ReadSZ2(void* p) {
+    __asm__ volatile("swc2 $19, 0(%0)" : : "r"(p) : "memory");
+}

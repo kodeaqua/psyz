@@ -1,3 +1,5 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libgte/reg13", SetGeomScreen);
+void SetGeomScreen(s32 value) {
+    __asm__ volatile("ctc2 %0, $26" : : "r"(value));
+}

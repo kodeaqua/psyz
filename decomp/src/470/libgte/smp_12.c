@@ -1,3 +1,9 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libgte/smp_12", AverageSZ4);
+s32 AverageSZ4(void) {
+    register s32 value asm("v0");
+    __asm__ volatile(".word 0x4B68002E\n\t"
+                     "mfc2 %0, $7"
+                     : "=r"(value));
+    return value;
+}

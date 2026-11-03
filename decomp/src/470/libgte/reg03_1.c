@@ -1,3 +1,7 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libgte/reg03_1", SetVertex0);
+void SetVertex0(void* p) {
+    __asm__ volatile("lwc2 $0, 0(%0)\n\t"
+                     "lwc2 $1, 4(%0)"
+                     : : "r"(p) : "memory");
+}

@@ -1,3 +1,7 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libgte/reg02_2", ReadIR0);
+s32 ReadIR0(void) {
+    register s32 value asm("v0");
+    __asm__ volatile("mfc2 %0, $8" : "=r"(value));
+    return value;
+}

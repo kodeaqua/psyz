@@ -1,3 +1,5 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libgte/reg00", SetRGBcd);
+void SetRGBcd(void* p) {
+    __asm__ volatile("lwc2 $6, 0(%0)" : : "r"(p) : "memory");
+}

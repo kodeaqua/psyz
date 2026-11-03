@@ -1,3 +1,5 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libgte/reg03_15", SetDQB);
+void SetDQB(s32 value) {
+    __asm__ volatile("ctc2 %0, $28" : : "r"(value));
+}

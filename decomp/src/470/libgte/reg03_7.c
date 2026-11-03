@@ -1,3 +1,5 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libgte/reg03_7", SetIR0);
+void SetIR0(s32 value) {
+    __asm__ volatile("mtc2 %0, $8" : : "r"(value));
+}
