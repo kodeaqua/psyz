@@ -32,4 +32,6 @@ INCLUDE_ASM("asm/470/nonmatchings/libcomb/comb", func_80009984);
 
 INCLUDE_ASM("asm/470/nonmatchings/libcomb/comb", func_80009A14);
 
-INCLUDE_ASM("asm/470/nonmatchings/libcomb/comb", func_80009AFC);
+s32 func_80009AFC(void) {
+    return 0;
+}

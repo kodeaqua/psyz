@@ -20,7 +20,9 @@ INCLUDE_ASM("asm/470/nonmatchings/libsio/siohandl", func_80105270);
 
 INCLUDE_ASM("asm/470/nonmatchings/libsio/siohandl", func_80105340);
 
-INCLUDE_ASM("asm/470/nonmatchings/libsio/siohandl", func_80105420);
+s32 func_80105420(void) {
+    return 0;
+}
 
 INCLUDE_RODATA("asm/470/nonmatchings/libsio/siohandl", D_80120844);
 
