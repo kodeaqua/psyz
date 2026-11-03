@@ -31,7 +31,13 @@ def main():
         raise SystemExit(f"Unsupported PSYQ_VER {version!r}; expected 400 or 470")
 
     source_root = "src" if version == "400" else "src/470"
-    flags = FLAGS + ["-Iinclude", f"-Iinclude/og{version}"]
+    flags = FLAGS + [
+        "-Iinclude",
+        f"-Iinclude/og{version}",
+        f"-Iinclude/og{version}/og",
+    ]
+    if version == "470":
+        flags.append("-DPSYQ_DECOMP_470")
     srcs = []
     for lib in LIBS_BY_VERSION[version]:
         d = os.path.join(ROOT, source_root, lib)

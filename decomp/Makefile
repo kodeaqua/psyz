@@ -1,25 +1,39 @@
 SHELL		:= bash -e -o pipefail
 PSYQ_VER	?= 400
 AS			:= mipsel-linux-gnu-as
-CPP			:= mipsel-linux-gnu-cpp
 LD			:= mipsel-linux-gnu-ld
 OBJCOPY		:= mipsel-linux-gnu-objcopy
 SPLAT		?= .venv/bin/splat
+SPLAT_POSTPROCESSOR :=
+SPLAT_ASM_CLEAN_DIR :=
 
 ifeq ($(PSYQ_VER),400)
 DECOMP_SRC_DIR	:= src
+DECOMP_SRC_OBJ_DIR := build/src
 DECOMP_ASM_DIR	:= asm
-OG_INCLUDE_DIR	:= include/og400
+DECOMP_ASM_OBJ_DIR := build/asm
+SPLAT_ASM_CLEAN_DIR := asm/data asm/nonmatchings
+OG_INCLUDE_ROOT	:= include/og400
+OG_INCLUDE_DIR	:= $(OG_INCLUDE_ROOT)/og
+CPP			:= mipsel-linux-gnu-cpp
+CPP_DEP_FLAGS	= -MMD -MF $@.d -MT $@
 PSYQ_CC1		?= ./bin/cc1-psx-272
 ASPSX_VERSION	?= 2.56
 CC1_DEP		:= bin/cc1-psx-272
 else ifeq ($(PSYQ_VER),470)
 DECOMP_SRC_DIR	:= src/470
+DECOMP_SRC_OBJ_DIR := build/src/470
 DECOMP_ASM_DIR	:= asm/470
-OG_INCLUDE_DIR	:= include/og470
-PSYQ_CC1		?=
-ASPSX_VERSION	?=
-CC1_DEP		:=
+DECOMP_ASM_OBJ_DIR := build/asm/470
+SPLAT_ASM_CLEAN_DIR := $(DECOMP_ASM_DIR)
+OG_INCLUDE_ROOT	:= include/og470
+OG_INCLUDE_DIR	:= $(OG_INCLUDE_ROOT)/og
+CPP			:= ./bin/cpp-psx-2952
+CPP_DEP_FLAGS	:=
+PSYQ_CC1		?= ./bin/cc1-psx-2952
+ASPSX_VERSION	?= 2.86
+CC1_DEP		:= bin/cc1-psx-2952
+SPLAT_POSTPROCESSOR := tools/prepare_splat470.py
 else
 $(error Unsupported PSYQ_VER '$(PSYQ_VER)' (expected 400 or 470))
 endif
@@ -30,9 +44,12 @@ MASPSX		+= --aspsx-version=$(ASPSX_VERSION)
 endif
 
 ASFLAGS		:= -Iinclude -march=r3000 -mtune=r3000 -no-pad-sections -O1 -G0
-CPPFLAGS	:= -Iinclude -I$(OG_INCLUDE_DIR) -Wno-builtin-declaration-mismatch \
+CPPFLAGS	:= -Iinclude -I$(OG_INCLUDE_ROOT) -I$(OG_INCLUDE_DIR) \
 	-Dmips -D__OPTIMIZE__ -D__mips__ -Dpsx -D__psx__ -D__psx -D_PSYQ \
 	-D__EXTENSIONS__ -D_MIPSEL -D_LANGUAGE_C -DLANGUAGE_C
+ifeq ($(PSYQ_VER),470)
+CPPFLAGS	+= -DPSYQ_DECOMP_470
+endif
 CFLAGS		:= -G0 -w -O2 -g -fno-builtin -funsigned-char -fpeephole \
 	-ffunction-cse -fpcc-struct-return -fcommon -fverbose-asm -msoft-float
 
@@ -42,16 +59,21 @@ LIBS_360    := libapi libc libcd libcard libcomb libetc libgpu libgs libgte
 LIBS_360    += libgun libmath libpress libsnd libspu libtap
 LIBS_400    := libapi libc2 libcd libcard libcomb libds libetc libgpu libgs libgte
 LIBS_400    += libgun libmath libmcrd libpress libsio libsnd libspu libtap
-LIBS_470	:= libapi libc libcd libcard libcomb libds libetc libgpu libgs libgte
+LIBS_470	:= libapi libc libcard libcd libcomb libds libetc libgpu libgs libgte
 LIBS_470	+= libgun libhmd libmath libmcrd libmcx libpad libpress libsio libsnd libspu libtap
 LIBS		:= $(LIBS_$(PSYQ_VER))
+ifeq ($(PSYQ_VER),470)
+PSYQ_LINK_LIBS	:= $(LIBS)
+else
+PSYQ_LINK_LIBS	:=
+endif
 
 ORG_ELF		:= build/psyq$(PSYQ_VER)_org.elf
 
 SRCS := $(foreach lib,$(LIBS),$(wildcard $(DECOMP_SRC_DIR)/$(lib)/*.c))
-OBJS := $(patsubst $(DECOMP_SRC_DIR)/%.c,build/$(PSYQ_VER)/src/%.c.o,$(SRCS))
+OBJS := $(patsubst $(DECOMP_SRC_DIR)/%.c,$(DECOMP_SRC_OBJ_DIR)/%.c.o,$(SRCS))
 ASM_SRCS := $(wildcard $(DECOMP_ASM_DIR)/data/*.s) $(foreach lib,$(LIBS),$(wildcard $(DECOMP_ASM_DIR)/data/$(lib)/*.s))
-ASM_OBJS := $(patsubst $(DECOMP_ASM_DIR)/%.s,build/$(PSYQ_VER)/asm/%.s.o,$(ASM_SRCS))
+ASM_OBJS := $(patsubst $(DECOMP_ASM_DIR)/%.s,$(DECOMP_ASM_OBJ_DIR)/%.s.o,$(ASM_SRCS))
 
 .PHONY: build
 build: build/psyq$(PSYQ_VER).ld
@@ -107,24 +129,26 @@ build/psyq$(PSYQ_VER).elf.link: $(ASM_OBJS)
 	@$(OBJCOPY) -O binary build/psyq$(PSYQ_VER).elf.intermediate build/psyq$(PSYQ_VER).elf
 	@rm -f build/psyq$(PSYQ_VER).elf.intermediate
 	@sha256sum -c build/psyq$(PSYQ_VER).elf.sha256
-build/$(PSYQ_VER)/src/%.c.o: $(DECOMP_SRC_DIR)/%.c build/psyq$(PSYQ_VER).ld $(OG_INCLUDE_DIR)/libgpu.h
+$(DECOMP_SRC_OBJ_DIR)/%.c.o: $(DECOMP_SRC_DIR)/%.c build/psyq$(PSYQ_VER).ld $(OG_INCLUDE_DIR)/libgpu.h include/common.h include/macro.inc include/macro_c.inc
 	@echo Compile $<
 	@mkdir -p $(dir $@)
 	@test -n "$(strip $(PSYQ_CC1))" || { echo "PSYQ_CC1 is required for PSY-Q $(PSYQ_VER) C sources" >&2; exit 1; }
-	@test -n "$(strip $(ASPSX_VERSION))" || { echo "ASPSX_VERSION is required for PSY-Q $(PSYQ_VER) C sources; the 4.7 assembler mode is not established" >&2; exit 1; }
-	@$(CPP) $(CPPFLAGS) -MMD -MF $@.d -MT $@ -lang-c $< | $(PSYQ_CC1) $(CFLAGS) -quiet | $(MASPSX) | $(AS) $(ASFLAGS) -o $@
+	@test -n "$(strip $(ASPSX_VERSION))" || { echo "ASPSX_VERSION is required for PSY-Q $(PSYQ_VER) C sources" >&2; exit 1; }
+	@$(CPP) $(CPPFLAGS) $(CPP_DEP_FLAGS) -lang-c $< | $(PSYQ_CC1) $(CFLAGS) -quiet | $(MASPSX) | $(AS) $(ASFLAGS) -o $@
 -include $(OBJS:=.d)
-build/$(PSYQ_VER)/asm/%.s.o: $(DECOMP_ASM_DIR)/%.s
+
+$(DECOMP_ASM_OBJ_DIR)/%.s.o: $(DECOMP_ASM_DIR)/%.s
 	@echo Assemble $<
 	@mkdir -p $(dir $@)
 	@$(AS) $(ASFLAGS) -o $@ $<
 
-build/psyq$(PSYQ_VER).ld: splat$(PSYQ_VER).yaml $(ORG_ELF) symbols.$(PSYQ_VER).txt
-	@rm -rf $@ $(DECOMP_ASM_DIR) build/$(PSYQ_VER)/asm build/$(PSYQ_VER)/src
+build/psyq$(PSYQ_VER).ld: splat$(PSYQ_VER).yaml $(ORG_ELF) symbols.$(PSYQ_VER).txt Makefile $(SPLAT_POSTPROCESSOR)
+	@rm -rf $@ $(SPLAT_ASM_CLEAN_DIR) $(DECOMP_ASM_OBJ_DIR) $(DECOMP_SRC_OBJ_DIR)
 	$(SPLAT) split $<
-$(ORG_ELF): $(patsubst %,build/obj/$(PSYQ_VER)/%, $(LIBS)) psyq-gen.sh rm-o-dups-$(PSYQ_VER).sh
+	$(if $(SPLAT_POSTPROCESSOR),python3 $(SPLAT_POSTPROCESSOR))
+$(ORG_ELF): $(patsubst %,build/obj/$(PSYQ_VER)/%, $(LIBS)) Makefile psyq-gen.sh rm-o-dups-$(PSYQ_VER).sh psyq$(PSYQ_VER).bin.sha256
 	./rm-o-dups-$(PSYQ_VER).sh
-	./psyq-gen.sh $(PSYQ_VER) "$(LD)"
+	./psyq-gen.sh $(PSYQ_VER) "$(LD)" "$(PSYQ_LINK_LIBS)"
 	$(OBJCOPY) -O binary $@ build/psyq$(PSYQ_VER)_org.bin
 	sha256sum -c psyq$(PSYQ_VER).bin.sha256
 	echo "$$(sha256sum $@ | cut -d' ' -f1)  build/psyq$(PSYQ_VER).elf" > build/psyq$(PSYQ_VER).elf.sha256
@@ -136,7 +160,7 @@ build/obj/$(PSYQ_VER)/lib%: sdk/psyq$(PSYQ_VER) bin/psyqdump
 		output="$$(echo $${file%.OBJ}.o | tr '[:upper:]' '[:lower:]')"; \
 		(cd build && ../bin/psyq-obj-parser "../$$file" -o "$${output#build/}") > /dev/null; \
 	done
-include/og%/libgpu.h: sdk/psyq% bin/psyq2elf
+include/og%/og/libgpu.h: sdk/psyq% bin/psyq2elf
 	@mkdir -p $(@D)
 	cd bin/psyq2elf && ./psyqinc.sh ../../$</INCLUDE ../../$(@D)
 bin/psyqdump: bin/psyq2elf
@@ -150,5 +174,12 @@ bin/cc1-psx-272:
 	cd bin && tar -xf gcc-2.7.2-psx.tar.gz
 	rm -f bin/gcc-2.7.2-psx.tar.gz bin/cc1plus bin/cpp bin/g++ bin/gcc
 	mv bin/cc1 $@
+bin/cc1-psx-2952: bin/gcc-2.95.2-psx.tar.gz.sha256
+	wget --quiet -O bin/gcc-2.95.2-psx.tar.gz https://github.com/decompals/old-gcc/releases/download/0.17/gcc-2.95.2-psx.tar.gz
+	sha256sum -c bin/gcc-2.95.2-psx.tar.gz.sha256
+	tar -xOzf bin/gcc-2.95.2-psx.tar.gz cc1 > $@
+	tar -xOzf bin/gcc-2.95.2-psx.tar.gz cpp > bin/cpp-psx-2952
+	chmod +x $@ bin/cpp-psx-2952
+	rm -f bin/gcc-2.95.2-psx.tar.gz
 tools/maspsx/maspsx.py:
 	git submodule update tools/maspsx

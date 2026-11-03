@@ -25,7 +25,11 @@ typedef unsigned int u32;
 #define CLAMP(x, min, max) x < min ? min : (x > max ? max : x)
 
 #ifndef PERMUTER
+#ifdef PSYQ_DECOMP_470
+__asm__(".include \"macro.inc\"\n");
+#else
 __asm__(".include \"macro_c.inc\"\n");
+#endif
 #define INCLUDE_ASM(FOLDER, NAME)                                              \
     __asm__(".pushsection .text\n"                                             \
             "\t.align\t2\n"                                                    \
