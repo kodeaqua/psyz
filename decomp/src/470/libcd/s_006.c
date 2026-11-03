@@ -1,3 +1,8 @@
 #include "common.h"
+#include <og/libcd.h>
 
-INCLUDE_ASM("asm/470/nonmatchings/libcd/s_006", CdLastPos);
+extern CdlLOC CD_pos;
+
+CdlLOC* CdLastPos(void) {
+    return &CD_pos;
+}
