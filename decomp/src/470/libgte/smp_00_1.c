@@ -1,7 +1,8 @@
 #include "common.h"
+#include <og/libgte.h>
 
-s32 Lzc(s32 data) {
-    register s32 value asm("v0");
+long Lzc(long data) {
+    register long value asm("v0");
     __asm__ volatile("mtc2 %1, $30\n\t"
                      "nop\n\t"
                      "nop\n\t"

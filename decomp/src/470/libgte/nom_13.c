@@ -1,6 +1,7 @@
 #include "common.h"
+#include <og/libgte.h>
 
-void NormalColor3_nom(void* v0, void* v1, void* v2) {
+void NormalColor3_nom(SVECTOR* v0, SVECTOR* v1, SVECTOR* v2) {
     __asm__ volatile("lwc2 $0, 0(%0)\n\t"
                      ".word 0xC8810004\n\t"
                      ".word 0xC8A20000\n\t"

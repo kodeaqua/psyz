@@ -1,6 +1,7 @@
 #include "common.h"
+#include <og/libgte.h>
 
-void LocalLight(void* v0, void* v1) {
+void LocalLight(SVECTOR* v0, VECTOR* v1) {
     __asm__ volatile("lwc2 $0, 0(%0)\n\t"
                      "lwc2 $1, 4(%0)\n\t"
                      "nop\n\t"

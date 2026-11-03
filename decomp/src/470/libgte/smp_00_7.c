@@ -1,7 +1,8 @@
 #include "common.h"
+#include <og/libgte.h>
 
-s32 AverageZ3(s32 sz0, s32 sz1, s32 sz2) {
-    register s32 value asm("v0");
+long AverageZ3(long sz0, long sz1, long sz2) {
+    register long value asm("v0");
     __asm__ volatile("mtc2 %1, $17\n\t"
                      "mtc2 %2, $18\n\t"
                      "mtc2 %3, $19\n\t"

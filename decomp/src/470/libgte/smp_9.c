@@ -1,6 +1,7 @@
 #include "common.h"
+#include <og/libgte.h>
 
-void ColorDpq(void* v0, void* v1, s32 p, void* v2) {
+void ColorDpq(VECTOR* v0, CVECTOR* v1, long p, CVECTOR* v2) {
     __asm__ volatile("lwc2 $9, 0(%0)\n\t"
                      "lwc2 $10, 4(%0)\n\t"
                      "lwc2 $11, 8(%0)\n\t"

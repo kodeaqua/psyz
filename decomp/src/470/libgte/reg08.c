@@ -1,6 +1,7 @@
 #include "common.h"
+#include <og/libgte.h>
 
-void ReadGeomOffset(void* ofx, void* ofy) {
+void ReadGeomOffset(long* ofx, long* ofy) {
     __asm__ volatile("cfc2 $8, $24\n\t"
                      "cfc2 $9, $25\n\t"
                      "sra $8, $8, 16\n\t"

@@ -1,6 +1,7 @@
 #include "common.h"
+#include <og/libgte.h>
 
-void NormalColorDpq_nom(void* v0, void* v1, s32 p) {
+void NormalColorDpq_nom(SVECTOR* v0, CVECTOR* v1, long p) {
     __asm__ volatile("lwc2 $0, 0(%0)\n\t"
                      "lwc2 $1, 4(%0)\n\t"
                      ".word 0xC8A60000\n\t"

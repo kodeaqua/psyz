@@ -1,6 +1,7 @@
 #include "common.h"
+#include <og/libgte.h>
 
-void ColorCol(void* v0, void* v1, void* v2) {
+void ColorCol(VECTOR* v0, CVECTOR* v1, CVECTOR* v2) {
     __asm__ volatile("lwc2 $9, 0(%0)\n\t"
                      "lwc2 $10, 4(%0)\n\t"
                      "lwc2 $11, 8(%0)\n\t"

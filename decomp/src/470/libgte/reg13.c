@@ -1,5 +1,6 @@
 #include "common.h"
+#include <og/libgte.h>
 
-void SetGeomScreen(s32 value) {
-    __asm__ volatile("ctc2 %0, $26" : : "r"(value));
+void SetGeomScreen(long h) {
+    __asm__ volatile("ctc2 %0, $26" : : "r"(h));
 }
