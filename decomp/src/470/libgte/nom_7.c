@@ -1,3 +1,17 @@
 #include "common.h"
+#include <og/libgte.h>
 
-INCLUDE_ASM("asm/470/nonmatchings/libgte/nom_7", RotAverageNclip3_nom);
+void RotAverageNclip3_nom(SVECTOR* v0, SVECTOR* v1, SVECTOR* v2) {
+    __asm__ volatile("lwc2 $0, 0(%0)\n\t"
+                     ".word 0xC8810004\n\t"
+                     ".word 0xC8A20000\n\t"
+                     ".word 0xC8A30004\n\t"
+                     ".word 0xC8C40000\n\t"
+                     ".word 0xC8C50004\n\t"
+                     "nop\n\t"
+                     ".word 0x4A280030\n\t"
+                     "cfc2 $2, $31\n\t"
+                     ".word 0x4B58002D\n\t"
+                     ".word 0x4B400006"
+                     : : "r"(v0), "r"(v1), "r"(v2) : "v0", "memory");
+}
