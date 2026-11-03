@@ -21,7 +21,7 @@ LIBS_360    := libapi libc libcd libcard libcomb libetc libgpu libgs libgte
 LIBS_360    += libgun libmath libpress libsnd libspu libtap
 LIBS_400    := libapi libc2 libcd libcard libcomb libds libetc libgpu libgs libgte
 LIBS_400    += libgun libmath libmcrd libpress libsio libsnd libspu libtap
-LIBS_470	:= libapi libc2 libcd libcard libcomb libds libetc libgpu libgs libgte
+LIBS_470	:= libapi libc libcd libcard libcomb libds libetc libgpu libgs libgte
 LIBS_470	+= libgun libhmd libmath libmcrd libmcx libpad libpress libsio libsnd libspu libtap
 LIBS		:= $(LIBS_$(PSYQ_VER))
 
