@@ -1,3 +1,3 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libpress/dct002", DecDCTBufSize);
+int DecDCTBufSize(u_long* bs) { return *(u_short*)bs; }
