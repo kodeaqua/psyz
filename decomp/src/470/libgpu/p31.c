@@ -1,3 +1,10 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libgpu/p31", SetLineF4);
+void SetLineF4(void* p) {
+    register u32 pattern asm("v1") = 0x55555555;
+    register u32 value asm("v0") = 6;
+    ((u8*)p)[3] = value;
+    value = 0x4C;
+    ((u8*)p)[7] = value;
+    *(u32*)((u8*)p + 0x18) = pattern;
+}

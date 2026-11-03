@@ -1,3 +1,11 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libgpu/p30", SetLineG3);
+void SetLineG3(void* p) {
+    register u32 pattern asm("v1") = 0x55555555;
+    register u32 value asm("v0") = 7;
+    ((u8*)p)[3] = value;
+    value = 0x58;
+    ((u8*)p)[7] = value;
+    *(u32*)((u8*)p + 0x1C) = pattern;
+    ((u8*)p)[0x17] = 0;
+}
