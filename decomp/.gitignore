@@ -9,3 +9,5 @@ undefined_*_auto.*.txt
 *.elf.sha256
 *.map
 compile_commands.json
+/include/og400/
+/include/og470/
