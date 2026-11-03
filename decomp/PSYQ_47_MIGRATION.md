@@ -20,7 +20,7 @@ The decomp README records that prior 4.7 matching work was difficult because the
 - FR-4: The 4.7 target MUST cover the PSY-Q 4.7 library set selected by the decomp project, including any library required by PsyZ integration.
 - FR-5: The 4.7 reconstructed ELF MUST match the GNU-converted PSY-Q 4.7 reference ELF byte-for-byte.
 - FR-6: PsyZ and PS1 integration builds MUST consume the intended PSY-Q 4.7-compatible headers and libraries after the migration is complete.
-- FR-7: Documentation and CI MUST identify and verify the active decomp target accurately.
+- FR-7: Documentation MUST identify the active decomp target and its verified toolchain accurately.
 
 ## Non-Functional Requirements
 
@@ -29,6 +29,7 @@ The decomp README records that prior 4.7 matching work was difficult because the
 - NFR-R1: A clean build MUST keep 4.0 and 4.7 generated artifacts in version-specific paths so parallel or sequential builds cannot mix objects.
 - NFR-R2: Repeating the 4.7 reference and matching build from the same SDK and toolchain MUST produce the same ELF checksum.
 - NFR-R3: The 4.0 target MUST remain buildable until the 4.7 acceptance criteria pass.
+- NFR-R4: Migration verification MUST run locally without depending on CI or containers.
 
 ### Performance
 
@@ -66,11 +67,11 @@ When the relevant PsyZ and PS1 integration targets build and run,
 Then they use the 4.7-compatible SDK headers and libraries,
 And the existing PsyZ API and rendering expectations remain satisfied.
 
-### AC-5: CI and docs match the implementation (FR-7)
+### AC-5: Local workflow and docs match the implementation (FR-7, NFR-R4)
 
 Given the final target is 4.7,
-When CI runs the decomp verification and a contributor follows the setup docs,
-Then CI verifies the 4.7 target,
+When a contributor follows the documented local decomp workflow,
+Then the workflow verifies the 4.7 target without a container,
 And the docs name the verified PSY-Q version and required toolchain.
 
 ## Edge Cases and Error Scenarios
@@ -94,3 +95,4 @@ And the docs name the verified PSY-Q version and required toolchain.
 - OS-1: Adding unrelated PSY-Q APIs or changing PsyZ runtime behavior — these require separate work and acceptance criteria.
 - OS-2: Dropping PSY-Q 4.0 before the full 4.7 acceptance criteria pass — the old target is the migration reference until then.
 - OS-3: Adding support for PSY-Q versions other than 4.0 and 4.7 — outside this migration.
+- OS-4: Changes to CI workflows or container definitions — excluded by the user's preference to keep verification local.
