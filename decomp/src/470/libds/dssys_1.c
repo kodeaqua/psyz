@@ -1,5 +1,7 @@
 #include "common.h"
 
+extern u8 D_80121E06;
+
 INCLUDE_ASM("asm/470/nonmatchings/libds/dssys_1", DS_init);
 
 INCLUDE_ASM("asm/470/nonmatchings/libds/dssys_1", DS_reset_members);
@@ -22,7 +24,9 @@ INCLUDE_ASM("asm/470/nonmatchings/libds/dssys_1", DS_lastcom);
 
 INCLUDE_ASM("asm/470/nonmatchings/libds/dssys_1", DS_lastmode);
 
-INCLUDE_ASM("asm/470/nonmatchings/libds/dssys_1", DS_lastpos);
+u8* DS_lastpos(void) {
+    return &D_80121E06;
+}
 
 INCLUDE_ASM("asm/470/nonmatchings/libds/dssys_1", DS_lastseek);
 
