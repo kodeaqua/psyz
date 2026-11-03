@@ -1,14 +1,32 @@
 # PSY-Q decomp
 
-This project aims to decompile the PSY-Q 4.0 SDK by matching individual functions. This is achieved by converting all the existing PSY-Q library object files to GNU-compatible objects and generating an ELF binary. This approach allows the use of modern tooling to aid in the decompilation process. The goal is for the decompiled code to match the generated ELF file exactly.
+This project aims to decompile PSY-Q SDKs by matching individual functions. It converts the SDK library object files to GNU-compatible objects and generates ELF binaries, allowing modern tooling to help with the decompilation process. The goal is for the decompiled code to match the generated binary exactly.
+
+PSY-Q 4.0 is the established target. PSY-Q 4.7 now also has a reproducible binary-matching target and a Splat-generated source baseline. Most 4.7 functions still use assembly stubs, so full C decompilation remains ongoing.
 
 This project allows to better understand the PSY-Q SDK internals better and to preserve the software for future development and archival purposes.
 
-## Set-up
+## Local build
 
-1. Be sure to clone this repo with `git clone PATH --recurse-submodules` or run `git submodule update --init --recursive` if you cloned it already.
-1. In the root directory run `make psyq_libs psyq_incs -j` to download and install PSY-Q in `../nugget/psyq/`.
-1. Run `make -j` to verify the decompiled PSY-Q SDK code matches the original binaries.
+Initialize the submodules and Python environment once:
+
+```sh
+git submodule update --init --recursive
+python3 -m venv decomp/.venv
+decomp/.venv/bin/pip install -r requirements.txt
+```
+
+Install the SDK and build either version locally. The build downloads the matching SDK and compiler assets as needed; install GNU MIPS little-endian binutils on the host first.
+
+```sh
+make -C decomp dependencies PSYQ_VER=400
+make -C decomp -j"$(nproc)" PSYQ_VER=400 CPP=cpp all
+
+make -C decomp dependencies PSYQ_VER=470
+make -C decomp -j"$(nproc)" PSYQ_VER=470 all
+```
+
+On systems that provide `mipsel-linux-gnu-cpp`, the PSY-Q 4.0 `CPP=cpp` override can be omitted. These commands build and verify the exact expected binary using local tools; CI and containers are not required. The generated results are saved under `decomp/expected/400/` and `decomp/expected/470/`.
 
 ## Decompile new code
 
@@ -24,12 +42,11 @@ Sozud's psy-q-decomp aims to match the original unconverted OBJ files using the 
 
 Whenever possible, decompiled code from this repository will be upstreamed to [Sozud decomp](https://github.com/sozud/psy-q-decomp).
 
-## Why PSY-Q 4.0
+## Version targets
 
-1. Easier to Match: PSY-Q 4.0 uses GCC 2.7.2, which is more flexible than the GCC 2.6.x used by PSY-Q 3.x, making it easier to match functions.
-1. Feature-Rich: It includes PSY-Q 4.x exclusive APIs used in the latest PS1 games and incorporates several fixes from PSY-Q 3.x.
-1. More Symbols: There are more symbols embedded in the OBJ files compared to PSY-Q 3.x, which aids in the decompilation process.
-1. This project initially started as a PSY-Q 4.7 decompilation. However, matching functions from PSY-Q 4.1 or above proved difficult, possibly due to differences in the compiler or compiler flags used, which are not currently known.
+- PSY-Q 4.0 uses GCC 2.7.2 and remains the established decompilation target.
+- PSY-Q 4.7 uses GCC 2.95.2. Its source baseline is generated with Splat; replacing assembly stubs with matching C implementations is incremental work.
+- Each version has separate source, assembly, object, SDK include, and expected-output paths so builds can be run sequentially without overwriting the other version's artifacts.
 
 ## Contributing
 

@@ -5,7 +5,7 @@
 - PsyZ is a C compatibility library that replaces the PSY-Q runtime for native ports of PlayStation 1 games. It is not a general PS1 emulator.
 - `psyz/src/psyz/` contains platform-independent PS1 API and hardware behavior. `psyz/src/platform/` contains desktop and SDL3 backends; `psyz/src/psp/` is the native PSP backend.
 - `psyz/include/` contains PSY-Q-compatible headers and the public PsyZ extensions under `psyz/include/psyz/`.
-- `decomp/src/` is a separate PSY-Q 4.0 decompilation project whose code is also used by PsyZ. Its goal includes matching original library binaries.
+- `decomp/src/` and `decomp/src/470/` are the separate PSY-Q 4.0 and 4.7 binary-matching trees. PSY-Q 4.7 currently builds from a Splat-generated baseline; converting all functions to C is still ongoing.
 - `psyz/tests/` contains the PsyZ tests and reference images. `ztest/` provides the cross-target test runner. `samples/` has integration examples; `web/` builds the WebAssembly sample gallery.
 
 ## Build and verification
@@ -13,6 +13,7 @@
 - `make -C psyz` builds the native static library. The CMake source selection and platform configuration live in `psyz/CMakeLists.txt`.
 - `make -C psyz test` builds and runs the native test suite. Use the ztest runner's filters to focus on the affected subsystem when practical.
 - Root `make -j` prepares PSY-Q SDK headers and libraries for projects that build for both PS1 and PsyZ; it is not the normal PsyZ library build.
+- The PSY-Q binary-matching builds run locally with `make -C decomp -j$(nproc) PSYQ_VER=400 CPP=cpp all` and `make -C decomp -j$(nproc) PSYQ_VER=470 all`, after preparing the SDK/toolchain dependencies. CI and containers are not required. The `CPP=cpp` override is useful on systems without `mipsel-linux-gnu-cpp`.
 - Initialize required Git submodules recursively before building targets that depend on them.
 - Tests compare rendered output against files in `psyz/tests/expected/`. Change reference images only when the intended behavior changes and the new output has been reviewed.
 
