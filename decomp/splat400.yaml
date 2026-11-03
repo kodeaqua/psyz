@@ -2,7 +2,7 @@ options:
   platform:     psx
   basename:     psyq
   base_path:    ./
-  build_path:   build/
+  build_path:   build/400/
   target_path:  build/psyq400_org.elf
   asm_path:     asm/
   src_path:     src/

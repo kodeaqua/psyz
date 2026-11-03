@@ -14,6 +14,7 @@
 - `make -C psyz test` builds and runs the native test suite. Use the ztest runner's filters to focus on the affected subsystem when practical.
 - Root `make -j` prepares PSY-Q SDK headers and libraries for projects that build for both PS1 and PsyZ; it is not the normal PsyZ library build.
 - The PSY-Q binary-matching builds run locally with `make -C decomp -j$(nproc) PSYQ_VER=400 CPP=cpp all` and `make -C decomp -j$(nproc) PSYQ_VER=470 all`, after preparing the SDK/toolchain dependencies. CI and containers are not required. The `CPP=cpp` override is useful on systems without `mipsel-linux-gnu-cpp`.
+- Keep generated PSY-Q build trees version-isolated: 4.0 uses `build/400/`, while 4.7 uses `build/src/470/` and `build/asm/470/`. Their Splat configs and cleanup paths must stay aligned so building one version does not delete the other's objects.
 - Initialize required Git submodules recursively before building targets that depend on them.
 - Tests compare rendered output against files in `psyz/tests/expected/`. Change reference images only when the intended behavior changes and the new output has been reviewed.
 

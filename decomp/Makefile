@@ -9,9 +9,9 @@ SPLAT_ASM_CLEAN_DIR :=
 
 ifeq ($(PSYQ_VER),400)
 DECOMP_SRC_DIR	:= src
-DECOMP_SRC_OBJ_DIR := build/src
+DECOMP_SRC_OBJ_DIR := build/400/src
 DECOMP_ASM_DIR	:= asm
-DECOMP_ASM_OBJ_DIR := build/asm
+DECOMP_ASM_OBJ_DIR := build/400/asm
 SPLAT_ASM_CLEAN_DIR := asm/data asm/nonmatchings
 OG_INCLUDE_ROOT	:= include/og400
 OG_INCLUDE_DIR	:= $(OG_INCLUDE_ROOT)/og
