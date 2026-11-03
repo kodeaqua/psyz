@@ -1,15 +1,36 @@
 SHELL		:= bash -e -o pipefail
-PSYQ_VER	:= 400
+PSYQ_VER	?= 400
 AS			:= mipsel-linux-gnu-as
-CC			:= ./bin/cc1-psx-272
 CPP			:= mipsel-linux-gnu-cpp
 LD			:= mipsel-linux-gnu-ld
 OBJCOPY		:= mipsel-linux-gnu-objcopy
-MASPSX		:= python3 tools/maspsx/maspsx.py --expand-div --aspsx-version=2.56
 SPLAT		?= .venv/bin/splat
 
+ifeq ($(PSYQ_VER),400)
+DECOMP_SRC_DIR	:= src
+DECOMP_ASM_DIR	:= asm
+OG_INCLUDE_DIR	:= include/og400
+PSYQ_CC1		?= ./bin/cc1-psx-272
+ASPSX_VERSION	?= 2.56
+CC1_DEP		:= bin/cc1-psx-272
+else ifeq ($(PSYQ_VER),470)
+DECOMP_SRC_DIR	:= src/470
+DECOMP_ASM_DIR	:= asm/470
+OG_INCLUDE_DIR	:= include/og470
+PSYQ_CC1		?=
+ASPSX_VERSION	?=
+CC1_DEP		:=
+else
+$(error Unsupported PSYQ_VER '$(PSYQ_VER)' (expected 400 or 470))
+endif
+
+MASPSX		:= python3 tools/maspsx/maspsx.py --expand-div
+ifneq ($(strip $(ASPSX_VERSION)),)
+MASPSX		+= --aspsx-version=$(ASPSX_VERSION)
+endif
+
 ASFLAGS		:= -Iinclude -march=r3000 -mtune=r3000 -no-pad-sections -O1 -G0
-CPPFLAGS	:= -Iinclude -Iinclude/og -Wno-builtin-declaration-mismatch \
+CPPFLAGS	:= -Iinclude -I$(OG_INCLUDE_DIR) -Wno-builtin-declaration-mismatch \
 	-Dmips -D__OPTIMIZE__ -D__mips__ -Dpsx -D__psx__ -D__psx -D_PSYQ \
 	-D__EXTENSIONS__ -D_MIPSEL -D_LANGUAGE_C -DLANGUAGE_C
 CFLAGS		:= -G0 -w -O2 -g -fno-builtin -funsigned-char -fpeephole \
@@ -27,21 +48,23 @@ LIBS		:= $(LIBS_$(PSYQ_VER))
 
 ORG_ELF		:= build/psyq$(PSYQ_VER)_org.elf
 
-SRCS := $(foreach lib,$(LIBS),$(wildcard src/$(lib)/*.c))
-OBJS := $(patsubst src/%.c,build/src/%.c.o,$(SRCS))
-ASM_SRCS := $(wildcard asm/data/*.s) $(foreach lib,$(LIBS),$(wildcard asm/data/$(lib)/*.s))
-ASM_OBJS := $(patsubst asm/%.s,build/asm/%.s.o,$(ASM_SRCS))
+SRCS := $(foreach lib,$(LIBS),$(wildcard $(DECOMP_SRC_DIR)/$(lib)/*.c))
+OBJS := $(patsubst $(DECOMP_SRC_DIR)/%.c,build/$(PSYQ_VER)/src/%.c.o,$(SRCS))
+ASM_SRCS := $(wildcard $(DECOMP_ASM_DIR)/data/*.s) $(foreach lib,$(LIBS),$(wildcard $(DECOMP_ASM_DIR)/data/$(lib)/*.s))
+ASM_OBJS := $(patsubst $(DECOMP_ASM_DIR)/%.s,build/$(PSYQ_VER)/asm/%.s.o,$(ASM_SRCS))
 
 .PHONY: build
-build: build/psyq$(PSYQ_VER).elf
+build: build/psyq$(PSYQ_VER).ld
+	$(MAKE) build/psyq$(PSYQ_VER).elf
 
+.PHONY: all
 all: compile_commands.json
-	make build/psyq$(PSYQ_VER).ld -j
-	make expected -j
+	$(MAKE) build/psyq$(PSYQ_VER).ld -j
+	$(MAKE) expected -j
 
-dependencies: tools/maspsx/maspsx.py bin/cc1-psx-272
-	cd sdk && make psyq400
-	make include/og/libgpu.h
+dependencies: tools/maspsx/maspsx.py $(CC1_DEP)
+	cd sdk && $(MAKE) psyq$(PSYQ_VER)
+	$(MAKE) $(OG_INCLUDE_DIR)/libgpu.h
 
 .PHONY: clean
 clean:
@@ -60,16 +83,17 @@ $(CLANG_FORMAT):
 
 .PHONY: format
 format: $(CLANG_FORMAT)
-	find src -type f -name '*.c' -print0 | xargs -0 -P$$(nproc) -n1 $(CLANG_FORMAT) -i
+	find $(DECOMP_SRC_DIR) -type f -name '*.c' -print0 | xargs -0 -P$$(nproc) -n1 $(CLANG_FORMAT) -i
 
+.PHONY: compile_commands.json
 compile_commands.json:
-	python3 tools/gen_compile_commands.py
+	PSYQ_VER=$(PSYQ_VER) python3 tools/gen_compile_commands.py
 
 .PHONY: expected
-expected: build/psyq$(PSYQ_VER).elf
-	rm -rf expected/
-	mkdir -p expected/build
-	cp -r build expected/
+expected: compile_commands.json build/psyq$(PSYQ_VER).elf
+	rm -rf expected/$(PSYQ_VER)
+	mkdir -p expected/$(PSYQ_VER)
+	cp -r build expected/$(PSYQ_VER)/
 
 build/psyq$(PSYQ_VER).elf: build/psyq$(PSYQ_VER).ld $(OBJS) $(ASSETS_OBJS)
 	@$(MAKE) --no-print-directory build/psyq$(PSYQ_VER).elf.link
@@ -83,22 +107,24 @@ build/psyq$(PSYQ_VER).elf.link: $(ASM_OBJS)
 	@$(OBJCOPY) -O binary build/psyq$(PSYQ_VER).elf.intermediate build/psyq$(PSYQ_VER).elf
 	@rm -f build/psyq$(PSYQ_VER).elf.intermediate
 	@sha256sum -c build/psyq$(PSYQ_VER).elf.sha256
-build/src/%.c.o: src/%.c build/psyq$(PSYQ_VER).ld
+build/$(PSYQ_VER)/src/%.c.o: $(DECOMP_SRC_DIR)/%.c build/psyq$(PSYQ_VER).ld $(OG_INCLUDE_DIR)/libgpu.h
 	@echo Compile $<
 	@mkdir -p $(dir $@)
-	@$(CPP) $(CPPFLAGS) -MMD -MF $@.d -MT $@ -lang-c $< | $(CC) $(CFLAGS) -quiet | $(MASPSX) | $(AS) $(ASFLAGS) -o $@
+	@test -n "$(strip $(PSYQ_CC1))" || { echo "PSYQ_CC1 is required for PSY-Q $(PSYQ_VER) C sources" >&2; exit 1; }
+	@test -n "$(strip $(ASPSX_VERSION))" || { echo "ASPSX_VERSION is required for PSY-Q $(PSYQ_VER) C sources; the 4.7 assembler mode is not established" >&2; exit 1; }
+	@$(CPP) $(CPPFLAGS) -MMD -MF $@.d -MT $@ -lang-c $< | $(PSYQ_CC1) $(CFLAGS) -quiet | $(MASPSX) | $(AS) $(ASFLAGS) -o $@
 -include $(OBJS:=.d)
-build/asm/%.s.o: asm/%.s
+build/$(PSYQ_VER)/asm/%.s.o: $(DECOMP_ASM_DIR)/%.s
 	@echo Assemble $<
 	@mkdir -p $(dir $@)
 	@$(AS) $(ASFLAGS) -o $@ $<
 
 build/psyq$(PSYQ_VER).ld: splat$(PSYQ_VER).yaml $(ORG_ELF) symbols.$(PSYQ_VER).txt
-	@rm -rf $@ asm/* build/asm build/src
+	@rm -rf $@ $(DECOMP_ASM_DIR) build/$(PSYQ_VER)/asm build/$(PSYQ_VER)/src
 	$(SPLAT) split $<
-$(ORG_ELF): $(patsubst %,build/obj/$(PSYQ_VER)/%, $(LIBS))
+$(ORG_ELF): $(patsubst %,build/obj/$(PSYQ_VER)/%, $(LIBS)) psyq-gen.sh rm-o-dups-$(PSYQ_VER).sh
 	./rm-o-dups-$(PSYQ_VER).sh
-	./psyq-gen.sh $(PSYQ_VER)
+	./psyq-gen.sh $(PSYQ_VER) "$(LD)"
 	$(OBJCOPY) -O binary $@ build/psyq$(PSYQ_VER)_org.bin
 	sha256sum -c psyq$(PSYQ_VER).bin.sha256
 	echo "$$(sha256sum $@ | cut -d' ' -f1)  build/psyq$(PSYQ_VER).elf" > build/psyq$(PSYQ_VER).elf.sha256
@@ -110,9 +136,9 @@ build/obj/$(PSYQ_VER)/lib%: sdk/psyq$(PSYQ_VER) bin/psyqdump
 		output="$$(echo $${file%.OBJ}.o | tr '[:upper:]' '[:lower:]')"; \
 		(cd build && ../bin/psyq-obj-parser "../$$file" -o "$${output#build/}") > /dev/null; \
 	done
-include/og/libgpu.h: sdk/psyq$(PSYQ_VER) bin/psyq2elf
-	@mkdir -p include/og
-	cd bin/psyq2elf && ./psyqinc.sh ../../$</INCLUDE ../../include/og
+include/og%/libgpu.h: sdk/psyq% bin/psyq2elf
+	@mkdir -p $(@D)
+	cd bin/psyq2elf && ./psyqinc.sh ../../$</INCLUDE ../../$(@D)
 bin/psyqdump: bin/psyq2elf
 	cd bin/psyq2elf && make
 	cp bin/psyq2elf/psyqdump bin/

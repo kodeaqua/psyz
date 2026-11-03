@@ -4,8 +4,8 @@ options:
   base_path:    ./
   build_path:   build/
   target_path:  build/psyq470_org.elf
-  asm_path:     asm/
-  src_path:     src/
+  asm_path:     asm/470/
+  src_path:     src/470/
   ld_script_path: build/psyq470.ld
   compiler:     GCC
   symbol_addrs_path:
