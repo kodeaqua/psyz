@@ -1,0 +1,3 @@
+#include "common.h"
+
+INCLUDE_ASM("asm/470/nonmatchings/libhmd/03000023", GsU_03000023);
