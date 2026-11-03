@@ -1,3 +1,5 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libgpu/p01", GetClut);
+u16 GetClut(s32 x, s32 y) {
+    return (y << 6) | ((x >> 4) & 0x3F);
+}
