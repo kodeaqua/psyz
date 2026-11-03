@@ -20,9 +20,13 @@ INCLUDE_ASM("asm/470/nonmatchings/libcomb/comb", func_80009524);
 
 INCLUDE_ASM("asm/470/nonmatchings/libcomb/comb", func_80009880);
 
-INCLUDE_ASM("asm/470/nonmatchings/libcomb/comb", func_80009974);
+s32 func_80009974(void) {
+    return 0;
+}
 
-INCLUDE_ASM("asm/470/nonmatchings/libcomb/comb", func_8000997C);
+s32 func_8000997C(void) {
+    return 0;
+}
 
 INCLUDE_ASM("asm/470/nonmatchings/libcomb/comb", func_80009984);
 
