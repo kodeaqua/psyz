@@ -1,3 +1,6 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libapi/a95", GetSp);
+s32 GetSp(void) {
+    register s32 sp_value asm("sp");
+    return sp_value;
+}

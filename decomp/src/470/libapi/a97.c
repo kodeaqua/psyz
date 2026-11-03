@@ -1,3 +1,7 @@
 #include "common.h"
 
-INCLUDE_ASM("asm/470/nonmatchings/libapi/a97", GetSr);
+s32 GetSr(void) {
+    s32 value;
+    asm volatile("mfc0 %0, $12" : "=r"(value));
+    return value;
+}
